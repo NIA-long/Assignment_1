@@ -1,4 +1,4 @@
-% Frequency Compression – Static, Nonlinear (log-scale) (theo PMC: https://pmc.ncbi.nlm.nih.gov/)
+% Frequency Compression – Static, Nonlinear (log-scale) (theo PMC - PubMed Central : https://pmc.ncbi.nlm.nih.gov/)
 clear; clc;
 
 % --- Nhập tên file ---
@@ -48,7 +48,9 @@ end
 
 % Nhập scale
 while true
-    scale = input('Enter the compression scale (e.g., ~100 for light compression, must be ≥ 0): ');
+    scale = input(['Enter the compression scale \n' ...
+        '(The lower the scale, the closer the frequency components are mapped toward the cut-off frequency,\n ' ...
+        'must be ≥ 0): ']);
     if scale >= 0
         break;
     else
@@ -105,8 +107,10 @@ function x_new = compress_channel_nonlinear(x, fs, fc, scale)
         elseif f(i) <= fs/2
             % Logarithmic compression
             f_shifted = fc + log10(1 + (f(i)-fc)) * scale;
-            idx_shifted = round(f_shifted / fs * N);
+            idx_shifted = round(f_shifted / fs * N); % Tìm chỉ số của f_shifted trong x
             if idx_shifted <= N
+                % "Lấy năng lượng từ tần số gốc f(i) và thêm nó vào vị trí idx_shifted trong phổ mới (X_new) – 
+                % tức là tần số sau khi đã bị nén."
                 X_new(idx_shifted) = X_new(idx_shifted) + X(i);
             end
         end
