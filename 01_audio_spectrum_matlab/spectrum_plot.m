@@ -1,32 +1,54 @@
-% Đọc file audio
-[y, fs] = audioread('audiotest1.wav');
+% Đọc tín hiệu âm thanh từ file wav
+[audio, fs] = audioread('Introduction.wav'); 
 
-% Nếu là stereo thì chuyển thành mono
-if size(y,2) == 2
-    y = mean(y, 2);
+% Chuyển sang mono nếu là stereo
+if size(audio, 2) == 2
+    audio = mean(audio, 2);
 end
 
-% Độ dài tín hiệu
-N = length(y);
+% Giới hạn thời lượng xử lý
+duration_sec = 180;
+samples_to_use = min(length(audio), duration_sec * fs);
+audio = audio(1:samples_to_use);
 
-% Thực hiện biến đổi Fourier (FFT)
-Y = fft(y);
+% Tính FFT
+N = length(audio);
+Y = fft(audio);
+magnitude_spectrum = abs(Y(1:floor(N/2)+1));
+f = linspace(0, fs/2, floor(N/2)+1);  % Trục tần số
 
-% Tạo trục tần số
-f = (0:N-1)*(fs/N);
-
-% Tính biên độ (magnitude)
-magnitude = abs(Y)/N;
-
-% Chỉ lấy một nửa phổ (tần số dương)
-half_N = floor(N/2);
-f_plot = f(1:half_N);
-magnitude_plot = magnitude(1:half_N);
-
-% Vẽ phổ
+% Vẽ phổ tần số
 figure;
-plot(f_plot, magnitude_plot);
+plot(f, magnitude_spectrum);
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
-title('Frequency Spectrum of the Audio Signal');
+title('Frequency Spectrum of Audio Signal (3 minutes)');
 grid on;
+
+% Phân tích năng lượng theo dải tần 
+% Các dải tần (Hz)
+low_band = [0, 500];
+mid_band = [500, 2000];
+high_band = [2000, fs/2];
+
+% Tìm chỉ số tương ứng
+idx_low = (f >= low_band(1)) & (f < low_band(2));
+idx_mid = (f >= mid_band(1)) & (f < mid_band(2));
+idx_high = (f >= high_band(1)) & (f <= high_band(2));
+
+% Tính năng lượng (tổng bình phương biên độ)
+E_low = sum(magnitude_spectrum(idx_low).^2);
+E_mid = sum(magnitude_spectrum(idx_mid).^2);
+E_high = sum(magnitude_spectrum(idx_high).^2);
+E_total = E_low + E_mid + E_high;
+
+% Tính tỷ lệ phần trăm
+pct_low = E_low / E_total * 100;
+pct_mid = E_mid / E_total * 100;
+pct_high = E_high / E_total * 100;
+
+% Nhận xét tự động
+disp('Kết quả phân tích phần trăm năng lượng các dải tần');
+fprintf('Năng lượng tần thấp (0–500 Hz): %.2f%%\n', pct_low);
+fprintf('Năng lượng tần trung (500–2000 Hz): %.2f%%\n', pct_mid);
+fprintf('Năng lượng tần cao (>2000 Hz): %.2f%%\n', pct_high);
